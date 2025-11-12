@@ -1,22 +1,14 @@
 {
-    "name": ":vendor_slug/:package_slug",
-    "description": ":package_description",
+    "name": "verifarma/serial-codes-generator",
+    "description": "Verifarma serial codes generator package",
     "keywords": [
-        ":vendor_name",
+        "verifarma",
         "laravel",
-        ":package_slug"
+        "serial-codes-generator"
     ],
-    "homepage": "https://github.com/:vendor_slug/:package_slug",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": ":author_name",
-            "email": "author@domain.com",
-            "role": "Developer"
-        }
-    ],
+    "homepage": "https://github.com/nvekselman-verifarma/serial-codes-gen",
     "require": {
-        "php": "^8.4",
+        "php": "^8.3.6",
         "spatie/laravel-package-tools": "^1.16",
         "illuminate/contracts": "^11.0||^12.0"
     },
@@ -35,16 +27,15 @@
     },
     "autoload": {
         "psr-4": {
-            "VendorName\\Skeleton\\": "src/",
-            "VendorName\\Skeleton\\Database\\Factories\\": "database/factories/"
-        }
+            "Verifarma\\SerialCodesGenerator\\": "src/"
+        }   
     },
     "autoload-dev": {
         "psr-4": {
-            "VendorName\\Skeleton\\Tests\\": "tests/",
-            "Workbench\\App\\": "workbench/app/"
+            "Verifarma\\SerialCodesGenerator\\Tests\\": "tests/"
         }
     },
+
     "scripts": {
         "post-autoload-dump": "@composer run prepare",
         "prepare": "@php vendor/bin/testbench package:discover --ansi",
@@ -63,10 +54,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "VendorName\\Skeleton\\SkeletonServiceProvider"
+                "Verifarma\\SerialCodesGenerator\\SerialCodesGeneratorServiceProvider"
             ],
             "aliases": {
-                "Skeleton": "VendorName\\Skeleton\\Facades\\Skeleton"
+                "SerialCodes": "Verifarma\\SerialCodesGenerator\\Facades\\SerialCodes"
             }
         }
     },

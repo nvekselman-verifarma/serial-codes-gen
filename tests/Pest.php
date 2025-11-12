@@ -1,5 +1,5 @@
 <?php
 
-use VendorName\Skeleton\Tests\TestCase;
+namespace Verifarma\SerialCodesGenerator\Tests;
 
 uses(TestCase::class)->in(__DIR__);
