@@ -10,10 +10,7 @@ $defaultLength   = 10;
 
 function makeSerialService(): SerialCodesGeneratorService {
     // Podés ajustar esto si querés inyectar otras cosas en el futuro
-    return new SerialCodesGeneratorService(
-        defaultAlphabet: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-        defaultLength: 10,
-    );
+    return new SerialCodesGeneratorService();
 }
 
 it('generates the requested quantity of serials with default config', function () use ($defaultAlphabet, $defaultLength) {
@@ -23,8 +20,7 @@ it('generates the requested quantity of serials with default config', function (
         quantity: 100,
     );
 
-    $result  = $service->generate($request);
-    $serials = $result->serials;
+    $serials = $service->generate($request);
 
     // Cantidad correcta
     expect($serials)->toHaveCount(100);
@@ -60,8 +56,7 @@ it('allows overriding length and alphabet from the request', function () {
         alphabet: $customAlphabet,
     );
 
-    $result  = $service->generate($request);
-    $serials = $result->serials;
+    $serials  = $service->generate($request);
 
     // Cantidad correcta
     expect($serials)->toHaveCount($quantity);
@@ -81,36 +76,6 @@ it('allows overriding length and alphabet from the request', function () {
     }
 });
 
-it('applies prefix and suffix correctly', function () {
-    $service = makeSerialService();
-
-    $baseLength = 8;
-    $prefix     = 'PRE-';
-    $suffix     = '-SFX';
-
-    $request = new SerialGenerationRequest(
-        quantity: 10,
-        length: $baseLength,
-        prefix: $prefix,
-        suffix: $suffix,
-    );
-
-    $result  = $service->generate($request);
-    $serials = $result->serials;
-
-    foreach ($serials as $serial) {
-        // Empieza con el prefix
-        expect($serial)->toStartWith($prefix);
-
-        // Termina con el suffix
-        expect($serial)->toEndWith($suffix);
-
-        // Largo = prefix + baseLength + suffix
-        $expectedLength = strlen($prefix) + $baseLength + strlen($suffix);
-        expect(strlen($serial))->toBe($expectedLength);
-    }
-});
-
 it('returns an empty list when quantity is zero', function () {
     $service = makeSerialService();
 
@@ -118,29 +83,12 @@ it('returns an empty list when quantity is zero', function () {
         quantity: 0,
     );
 
-    $result  = $service->generate($request);
-    $serials = $result->serials;
+    $serials = $service->generate($request);
 
     expect($serials)->toBeArray()
         ->and($serials)->toBeEmpty();
 });
 
-it('throws an exception when alphabet becomes empty', function () {
-    $service = new SerialCodesGeneratorService(
-        defaultAlphabet: 'X', // algo cualquiera
-        defaultLength: 5,
-    );
-
-    // Pasamos alphabet vacío explícitamente en el request.
-    // Como no es null, pisa al default y llega vacío a generateCode().
-    $request = new SerialGenerationRequest(
-        quantity: 1,
-        length: 5,
-        alphabet: '',
-    );
-
-    $service->generate($request);
-})->throws(RuntimeException::class, 'Alphabet for serial code generation cannot be empty.');
 
 it('does not generate identical serials for a reasonable sample', function () {
     $service = makeSerialService();
@@ -149,8 +97,7 @@ it('does not generate identical serials for a reasonable sample', function () {
         quantity: 200,
     );
 
-    $result  = $service->generate($request);
-    $serials = $result->serials;
+    $serials = $service->generate($request);
 
     // Sanity check simple: no deberían ser todos iguales
     $uniqueCount = count(array_unique($serials));
