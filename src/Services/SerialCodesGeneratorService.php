@@ -2,8 +2,8 @@
 
 namespace Verifarma\SerialCodesGenerator\Services;
 
-use Verifarma\SerialCodesGenerator\Contracts\SerialCodesGeneratorContract;
 use Verifarma\SerialCodesGenerator\Contracts\GenerationAlgorithmContract;
+use Verifarma\SerialCodesGenerator\Contracts\SerialCodesGeneratorContract;
 use Verifarma\SerialCodesGenerator\DTO\SerialGenerationRequest;
 use Verifarma\SerialCodesGenerator\GenerationAlgorithms\RandomGenerator;
 
@@ -13,6 +13,7 @@ class SerialCodesGeneratorService implements SerialCodesGeneratorContract
      * Defaults generales del paquete.
      */
     protected string $defaultAlphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
     protected int $defaultLength = 10;
 
     /**
@@ -22,9 +23,10 @@ class SerialCodesGeneratorService implements SerialCodesGeneratorContract
      */
     protected array $algorithms = [];
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->algorithms = [
-            new RandomGenerator(),
+            new RandomGenerator,
         ];
     }
 
@@ -41,13 +43,13 @@ class SerialCodesGeneratorService implements SerialCodesGeneratorContract
         }
 
         // 2) Resolver length / alphabet efectivos
-        $length   = $request->length   ?? $this->defaultLength;
+        $length = $request->length ?? $this->defaultLength;
         $alphabet = $request->alphabet ?? $this->defaultAlphabet;
 
         // 3) Resolver algoritmo a usar, según el nombre en el request
         $algorithm = $this->resolveAlgorithm($request);
 
-        $generated      = [];
+        $generated = [];
         $generatedIndex = []; // lookup O(1) para evitar duplicados en memoria
 
         for ($i = 0; $i < $request->quantity; $i++) {
@@ -64,7 +66,7 @@ class SerialCodesGeneratorService implements SerialCodesGeneratorContract
                 $existsInMemory = isset($generatedIndex[$code]);
             } while ($existsInMemory);
 
-            $generated[]           = $code;
+            $generated[] = $code;
             $generatedIndex[$code] = true;
         }
 
@@ -85,7 +87,7 @@ class SerialCodesGeneratorService implements SerialCodesGeneratorContract
             return;
         }
 
-        $length   = $request->length   ?? $this->defaultLength;
+        $length = $request->length ?? $this->defaultLength;
         $alphabet = $request->alphabet ?? $this->defaultAlphabet;
 
         if ($length <= 0) {
@@ -96,6 +98,7 @@ class SerialCodesGeneratorService implements SerialCodesGeneratorContract
             throw new \InvalidArgumentException('Alphabet for serial code generation cannot be empty.');
         }
     }
+
     protected function resolveAlgorithm(SerialGenerationRequest $request): GenerationAlgorithmContract
     {
         // El request debería tener algo como:
@@ -125,5 +128,4 @@ class SerialCodesGeneratorService implements SerialCodesGeneratorContract
         // Si no hay ningún algoritmo registrado, no podemos generar nada
         throw new \RuntimeException('No algorithms registered in SerialCodesGeneratorService.');
     }
-
 }

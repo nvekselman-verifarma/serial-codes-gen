@@ -12,7 +12,7 @@ final class SerialGenerationRequest
         public ?string $alphabet = null,
         public ?string $algorithm = null,
 
-        // Estructura 
+        // Estructura
         public ?string $pattern = null, // Ej: 'AAAA-NNNN-XXXXXXXX'
 
         // Extras futuros

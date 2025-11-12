@@ -6,7 +6,6 @@ use Verifarma\SerialCodesGenerator\Contracts\GenerationAlgorithmContract;
 
 class RandomGenerator implements GenerationAlgorithmContract
 {
-
     public function getName(): string
     {
         return 'random';
@@ -17,9 +16,8 @@ class RandomGenerator implements GenerationAlgorithmContract
         int $length,
         ?int $idx = null,
         ?int $seed = null,
-    ): string
-    {
-        $code           = '';
+    ): string {
+        $code = '';
         $alphabetLength = strlen($alphabet);
 
         for ($i = 0; $i < $length; $i++) {

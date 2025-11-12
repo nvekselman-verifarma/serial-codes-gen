@@ -6,11 +6,12 @@ use Verifarma\SerialCodesGenerator\DTO\SerialGenerationRequest;
 use Verifarma\SerialCodesGenerator\Services\SerialCodesGeneratorService;
 
 $defaultAlphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-$defaultLength   = 10;
+$defaultLength = 10;
 
-function makeSerialService(): SerialCodesGeneratorService {
+function makeSerialService(): SerialCodesGeneratorService
+{
     // Podés ajustar esto si querés inyectar otras cosas en el futuro
-    return new SerialCodesGeneratorService();
+    return new SerialCodesGeneratorService;
 }
 
 it('generates the requested quantity of serials with default config', function () use ($defaultAlphabet, $defaultLength) {
@@ -47,8 +48,8 @@ it('allows overriding length and alphabet from the request', function () {
     $service = makeSerialService();
 
     $customAlphabet = 'ABC';
-    $customLength   = 5;
-    $quantity       = 50;
+    $customLength = 5;
+    $quantity = 50;
 
     $request = new SerialGenerationRequest(
         quantity: $quantity,
@@ -56,7 +57,7 @@ it('allows overriding length and alphabet from the request', function () {
         alphabet: $customAlphabet,
     );
 
-    $serials  = $service->generate($request);
+    $serials = $service->generate($request);
 
     // Cantidad correcta
     expect($serials)->toHaveCount($quantity);
@@ -88,7 +89,6 @@ it('returns an empty list when quantity is zero', function () {
     expect($serials)->toBeArray()
         ->and($serials)->toBeEmpty();
 });
-
 
 it('does not generate identical serials for a reasonable sample', function () {
     $service = makeSerialService();
