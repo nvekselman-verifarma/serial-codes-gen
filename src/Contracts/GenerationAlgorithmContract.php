@@ -4,23 +4,21 @@ namespace Verifarma\SerialCodesGenerator\Contracts;
 
 interface GenerationAlgorithmContract
 {
-
     /**
-     * Nombre lógico del algoritmo, ej: "random", "pattern", "emvs".
+     * Logical name of the algorithm (e.g. "aes-prp", "feistel", "random").
      */
     public function getName(): string;
+
     /**
-     * @param string   $alphabet Alfabeto a utilizar para generar los códigos
-     * @param int      $length
-     * @param int|null $idx      Índice / offset del batch (ej: número de chunk o iteración externa)
-     * @param int|null $seed     Semilla opcional para generación determinística
+     * Generate a raw numeric code in the range [0, serialCodeCombinations - 1].
      *
-     * @return string Raw serial code
+     * @param  \GMP  $serialCodeCombinations  Total possible combinations.
+     * @param  \GMP  $idx  Sequential index in the batch.
+     * @param  int  $seed  Optional deterministic seed.
      */
     public function generateRawCode(
-        string $alphabet,
-        int $length,
-        ?int $idx = null,
-        ?int $seed = null,
-    ): string;
+        \GMP $serialCodeCombinations,
+        \GMP $idx,
+        int $seed
+    ): \GMP;
 }

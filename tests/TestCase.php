@@ -13,4 +13,14 @@ class TestCase extends Orchestra
             SerialCodesGeneratorServiceProvider::class,
         ];
     }
+
+    protected function getPackageAliases($app)
+    {
+        $composer = json_decode(
+            file_get_contents(__DIR__.'/../composer.json'),
+            true
+        );
+
+        return $composer['extra']['laravel']['aliases'] ?? [];
+    }
 }

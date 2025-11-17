@@ -2,9 +2,11 @@
 
 namespace Verifarma\SerialCodesGenerator\Services;
 
-use Verifarma\SerialCodesGenerator\Contracts\SerialCodesGeneratorContract;
 use Verifarma\SerialCodesGenerator\Contracts\GenerationAlgorithmContract;
+use Verifarma\SerialCodesGenerator\Contracts\SerialCodesGeneratorContract;
 use Verifarma\SerialCodesGenerator\DTO\SerialGenerationRequest;
+use Verifarma\SerialCodesGenerator\GenerationAlgorithms\AesGenerator;
+use Verifarma\SerialCodesGenerator\GenerationAlgorithms\DeterministicGenerator;
 use Verifarma\SerialCodesGenerator\GenerationAlgorithms\RandomGenerator;
 
 class SerialCodesGeneratorService implements SerialCodesGeneratorContract
@@ -13,6 +15,7 @@ class SerialCodesGeneratorService implements SerialCodesGeneratorContract
      * Defaults generales del paquete.
      */
     protected string $defaultAlphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
     protected int $defaultLength = 10;
 
     /**
@@ -22,9 +25,12 @@ class SerialCodesGeneratorService implements SerialCodesGeneratorContract
      */
     protected array $algorithms = [];
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->algorithms = [
-            new RandomGenerator(),
+            new RandomGenerator,
+            new AesGenerator,
+            new DeterministicGenerator,
         ];
     }
 
@@ -33,42 +39,48 @@ class SerialCodesGeneratorService implements SerialCodesGeneratorContract
      */
     public function generate(SerialGenerationRequest $request): array
     {
-        // 1) Validar el request según reglas de dominio simples
         $this->validate($request);
 
         if ($request->quantity === 0) {
             return [];
         }
 
-        // 2) Resolver length / alphabet efectivos
-        $length   = $request->length   ?? $this->defaultLength;
+        $length = $request->length ?? $this->defaultLength;
         $alphabet = $request->alphabet ?? $this->defaultAlphabet;
+        $alphabetLength = strlen($alphabet);
 
-        // 3) Resolver algoritmo a usar, según el nombre en el request
-        $algorithm = $this->resolveAlgorithm($request);
+        $algorithm = $this->determineAlgorithm($request);
 
-        $generated      = [];
-        $generatedIndex = []; // lookup O(1) para evitar duplicados en memoria
+        // determine combinations of serial codes bounded to 2^128
+        $serialCodeCombinations = gmp_pow(gmp_init(2), 128);
+        if (log($alphabetLength, 2) * $length < 128) {
+            $serialCodeCombinations = gmp_pow(gmp_init($alphabetLength), $length);
+        }
+
+        $generatedIndex = [];
 
         for ($i = 0; $i < $request->quantity; $i++) {
             do {
-                $code = $algorithm->generateRawCode(
-                    alphabet: $alphabet,
-                    length: $length,
-                    idx: $i,
-                    seed: $request->seed ?? null, // si querés tener un campo seed en el request
+                $gmp_code = $algorithm->generateRawCode(
+                    serialCodeCombinations: $serialCodeCombinations,
+                    idx: gmp_init($i + $request->index),
+                    seed: $request->seed ?? 0,
                 );
+                $code = $this->encodeBaseNFromGmp($gmp_code, $alphabet, $length);
 
-                // $code = $this->applyStructure($rawCode, $request);
+            } while (isset($generatedIndex[$code]));
 
-                $existsInMemory = isset($generatedIndex[$code]);
-            } while ($existsInMemory);
-
-            $generated[]           = $code;
             $generatedIndex[$code] = true;
         }
 
-        return $generated;
+        return array_keys($generatedIndex);
+    }
+
+    public function generateFrom(array $params)
+    {
+        return $this->generate(
+            SerialGenerationRequest::fromArray($params)
+        );
     }
 
     /**
@@ -85,7 +97,7 @@ class SerialCodesGeneratorService implements SerialCodesGeneratorContract
             return;
         }
 
-        $length   = $request->length   ?? $this->defaultLength;
+        $length = $request->length ?? $this->defaultLength;
         $alphabet = $request->alphabet ?? $this->defaultAlphabet;
 
         if ($length <= 0) {
@@ -95,8 +107,14 @@ class SerialCodesGeneratorService implements SerialCodesGeneratorContract
         if ($alphabet === '') {
             throw new \InvalidArgumentException('Alphabet for serial code generation cannot be empty.');
         }
+
+        // Validate: no repeated characters
+        if (strlen($alphabet) !== count(array_unique(str_split($alphabet)))) {
+            throw new \InvalidArgumentException('Alphabet cannot contain repeated characters.');
+        }
     }
-    protected function resolveAlgorithm(SerialGenerationRequest $request): GenerationAlgorithmContract
+
+    protected function determineAlgorithm(SerialGenerationRequest $request): GenerationAlgorithmContract
     {
         // El request debería tener algo como:
         // public ?string $algorithm = null; // ej: 'random', 'pattern'
@@ -110,7 +128,6 @@ class SerialCodesGeneratorService implements SerialCodesGeneratorContract
                 }
             }
 
-            // Si el usuario pidió un algoritmo específico y no está registrado, error claro
             throw new \RuntimeException(sprintf(
                 'Requested algorithm "%s" is not registered in SerialCodesGeneratorService.',
                 $requestedAlgorithm
@@ -126,4 +143,21 @@ class SerialCodesGeneratorService implements SerialCodesGeneratorContract
         throw new \RuntimeException('No algorithms registered in SerialCodesGeneratorService.');
     }
 
+    // -------------------------------------------------------------------------
+    // Convert value [0..M-1] to given alphabet and length
+    // -------------------------------------------------------------------------
+
+    private function encodeBaseNFromGmp(\GMP $value, string $alphabet, int $length): string
+    {
+        $alphabetLength = gmp_init(strlen($alphabet));
+        $chars = [];
+
+        for ($i = 0; $i < $length; $i++) {
+            $digit = gmp_intval(gmp_mod($value, $alphabetLength));
+            $chars[] = $alphabet[$digit];
+            $value = gmp_div_q($value, $alphabetLength);
+        }
+
+        return implode('', $chars);
+    }
 }

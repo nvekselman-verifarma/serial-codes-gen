@@ -13,16 +13,18 @@ class SerialCodesGeneratorServiceProvider extends PackageServiceProvider
     {
         $package
             ->name('serial-codes-generator')
-            ->hasConfigFile('serial-codes-generator');
+            ->hasConfigFile();
     }
 
-    public function registeringPackage(): void
+    public function packageRegistered(): void
     {
         $this->app->singleton(SerialCodesGeneratorContract::class, function () {
-            return new SerialCodesGeneratorService(
-                config('serial-codes-generator.alphabet'),
-                config('serial-codes-generator.default_length'),
-            );
+            return new SerialCodesGeneratorService;
+        });
+
+        // Facade accessor
+        $this->app->singleton('serial-codes-generator', function () {
+            return new SerialCodesGeneratorService;
         });
     }
 }

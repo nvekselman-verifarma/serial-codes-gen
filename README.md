@@ -1,93 +1,117 @@
-# :package_description
+# Verifarma Serial Codes Generator
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/:vendor_slug/:package_slug.svg?style=flat-square)](https://packagist.org/packages/:vendor_slug/:package_slug)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/:vendor_slug/:package_slug/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/:vendor_slug/:package_slug/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/:vendor_slug/:package_slug/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/:vendor_slug/:package_slug/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/:vendor_slug/:package_slug.svg?style=flat-square)](https://packagist.org/packages/:vendor_slug/:package_slug)
-<!--delete-->
+A Laravel package for generating secure, unique, and customizable serial codes. Supports multiple algorithms (random, AES-based, deterministic), flexible alphabet definitions, and deterministic reproducibility via seeds. Designed for high-volume serial generation with predictable behavior.
+
 ---
-This repo can be used to scaffold a Laravel package. Follow these steps to get started:
 
-1. Press the "Use this template" button at the top of this repo to create a new repo with the contents of this skeleton.
-2. Run "php ./configure.php" to run a script that will replace all placeholders throughout all the files.
-3. Have fun creating your package.
-4. If you need help creating a package, consider picking up our <a href="https://laravelpackage.training">Laravel Package Training</a> video course.
+## 🚀 Features
+
+- Simple API via the `SerialCodes` facade
+- Multiple generation algorithms:
+  - Random generator
+  - AES-based generator
+  - Fully deterministic generator
+- Configurable alphabet and code length
+- Deterministic mode supports:
+  - Reproducible results when the same seed is used
+  - Iterating over the entire domain without collisions
+- Handles batch generation of millions of codes
+- Thoroughly tested with Pest + Testbench
+- Laravel-friendly, minimal setup required
+
 ---
-<!--/delete-->
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
 
-## Support us
-
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/:package_name.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/:package_name)
-
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
-
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
-
-## Installation
-
-You can install the package via composer:
+## 📦 Installation
 
 ```bash
-composer require :vendor_slug/:package_slug
+composer require verifarma/serial-codes-generator
 ```
 
-You can publish and run the migrations with:
+Laravel will auto-discover both the service provider and the facade alias:
 
-```bash
-php artisan vendor:publish --tag=":package_slug-migrations"
-php artisan migrate
+```json
+"aliases": {
+    "SerialCodes": "Verifarma\\SerialCodesGenerator\\Facades\\SerialCodes"
+}
 ```
 
-You can publish the config file with:
-
-```bash
-php artisan vendor:publish --tag=":package_slug-config"
-```
-
-This is the contents of the published config file:
+Start generating codes immediately:
 
 ```php
-return [
-];
+SerialCodes::generateFrom([...]);
 ```
 
-Optionally, you can publish the views using
+---
 
-```bash
-php artisan vendor:publish --tag=":package_slug-views"
-```
-
-## Usage
+## 🧩 Usage
 
 ```php
-$variable = new VendorName\Skeleton();
-echo $variable->echoPhrase('Hello, VendorName!');
+
+$codes = SerialCodes::generateFrom([
+    'quantity'  => 1000,
+    'length'    => 8,
+    'alphabet'  => 'ABC',
+    'seed'      => 12345,
+    'algorithm' => 'deterministic', 
+    'index' => 23,
+]);
 ```
 
-## Testing
 
-```bash
-composer test
-```
 
-## Changelog
+### 🎛 Algorithms
 
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
+'algorithm' => 'random' | 'AES' | 'deterministic' 
 
-## Contributing
 
-Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
 
-## Security Vulnerabilities
+1. **RandomGenerator (default)** 
 
-Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
+Recommended when the alphabet-space is large (alphabet^length is high), making collisions statistically negligible.
+Ideal for simple, high-throughput generation.
+Its behavior is non-deterministic and extremely fast, making it suitable for large batches where reproducibility is not necessary and the combination space is sufficiently large to naturally avoid collisions.
 
-## Credits
+2. **AesGenerator**
 
-- [:author_name](https://github.com/:author_username)
-- [All Contributors](../../contributors)
+Suited for generating cryptographically strong serial numbers in deterministic environments.
+Given the same seed and index, AES-ECB produces stable, reproducible outputs.
+However, AES does not provide collision-free guarantees over small domains; when the alphabet-space is limited, ensuring uniqueness becomes computationally expensive.
+Best used when security properties matter and full domain coverage is not required.
 
-## License
+3. **DeterministicGenerator**
 
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+A purely arithmetic, pseudo-random mapping with deterministic output, similar to AES, for a given (alphabet, length, seed) guarantees collision-free enumeration for every index.
+This makes it ideal for workflows that require full coverage of all possible codes, safe iteration across batches, or deterministic reproducibility without collisions. This generator is not cryptographically strong.
+
+
+## 🧱 API details
+
+### `SerialCodes::generateFrom(array $params)`
+
+Main entry point. Accepts:
+
+| Parameter  | Type   | Default | Description                          |
+| ---------- | ------ | ------- | ------------------------------------ |
+| `quantity` | `int`  | —       | Number of serials to generate        |
+| `length`   | `int`  | `null`  | Code length (defaults to config)     |
+| `alphabet` | `string` | `null`  | Allowed characters                   |
+| `algorithm`| `string` | `null`  | Algorithm name                       |
+| `seed`     | `int`  | `null`  | Deterministic seed                   |
+| `index`     | `int`  | `0`  | Amount of current serial codes in database                |
+
+---
+
+
+## 🧪 Testing & tooling
+
+- **Tests:** `composer test`
+- **Static analysis:** `composer analyse`
+- **Formatting:** `composer format`
+
+The stack uses Pest, Testbench, PHPStan (Larastan), and Laravel Pint.
+
+---
+
+## 📄 License
+
+Released under the MIT License. See `LICENSE.md`.
