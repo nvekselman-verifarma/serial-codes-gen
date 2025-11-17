@@ -285,7 +285,6 @@ test('deterministic generator produces unique values for every possible idx', fu
     expect(count($seen))->toBe($total);
 });
 
-
 test('deterministic generator respects index', function () {
     $alphabet = 'ABC';
     $length = 8;
@@ -294,7 +293,7 @@ test('deterministic generator respects index', function () {
     $qty1 = 100 + $intersection;
 
     $codes1 = SerialCodes::generateFrom([
-        'quantity' =>  $qty1,
+        'quantity' => $qty1,
         'alphabet' => $alphabet,
         'length' => $length,
         'seed' => $seed,
@@ -303,7 +302,7 @@ test('deterministic generator respects index', function () {
     ]);
 
     $codes2 = SerialCodes::generateFrom([
-        'quantity' =>  $qty1,
+        'quantity' => $qty1,
         'alphabet' => $alphabet,
         'length' => $length,
         'seed' => $seed,
@@ -311,5 +310,5 @@ test('deterministic generator respects index', function () {
         'algorithm' => (new DeterministicGenerator)->getName(),
     ]);
 
-   expect(array_intersect($codes1, $codes2))->toHaveCount($intersection);
+    expect(array_intersect($codes1, $codes2))->toHaveCount($intersection);
 });
